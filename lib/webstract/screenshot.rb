@@ -1,12 +1,10 @@
-require 'webshot'
-
 module Webstract
   class Screenshot
     attr_accessor :url, :path, :width, :height, :quality
     attr_reader :handle
 
     def initialize(options = {})
-      @handle = Webstract::ScreenshotBackend.instance
+      @handle = Webstract::ScreenCapture.new(options)
 
       options.each do |k, value|
         setter = "#{k}="

@@ -1,21 +1,21 @@
-require 'singleton'
+require 'capybara/dsl'
 
 module Webstract
   class ScreenCapture
     include Capybara::DSL
-    include Singleton
+
+    attr_reader :width, :height, :user_agent, :gravity, :quality
 
     def initialize(opts = {})
-      Webstract.capybara_setup!
-      width  = opts.fetch(:width, Webshot.width)
-      height = opts.fetch(:height, Webshot.height)
-      user_agent = opts.fetch(:user_agent, Webshot.user_agent)
+      Webstract::ScreenshotBackend.capybara_setup!
+      @width  = opts.fetch(:width, Webstract::ScreenshotBackend.width)
+      @height = opts.fetch(:height, Webstract::ScreenshotBackend.height)
+      @gravity = opts.fetch(:gravity, Webstract::ScreenshotBackend.gravity)
+      @user_agent = opts.fetch(:user_agent, Webstract::ScreenshotBackend.user_agent)
 
       # Browser settings
-      page.driver.resize(width, height)
-      page.driver.headers = {
-        "User-Agent" => user_agent,
-      }
+      page.driver.resize(@width, @height)
+      page.driver.headers = { "User-Agent" => @user_agent }
     end
 
     def start_session(&block)
@@ -29,17 +29,17 @@ module Webstract
     def capture(url, path, opts = {})
       begin
         # Default settings
-        width   = opts.fetch(:width, 120)
-        height  = opts.fetch(:height, 90)
-        gravity = opts.fetch(:gravity, "north")
-        quality = opts.fetch(:quality, 85)
+        @width   = opts.fetch(:width, 120)        if opts[:width]
+        @height  = opts.fetch(:height, 90)        if opts[:width]
+        @gravity = opts.fetch(:gravity, "north")  if opts[:gravity]
+        @quality = opts.fetch(:quality, 85)       if opts[:quality]
 
         # Reset session before visiting url
         Capybara.reset_sessions! unless @session_started
         @session_started = false
 
         # Open page
-        visit url
+        visit(url)
 
         # Timeout
         sleep opts[:timeout] if opts[:timeout]
@@ -51,7 +51,7 @@ module Webstract
           begin
             # Save screenshot to file
             page.driver.save_screenshot(tmp.path, :full => true)
-
+            binding.pry
             # Resize screenshot
             thumb = MiniMagick::Image.open(tmp.path)
             if block_given?
@@ -62,23 +62,23 @@ module Webstract
                 c.thumbnail "#{width}x"
                 c.background "white"
                 c.extent "#{width}x#{height}"
-                c.gravity gravity
-                c.quality quality
+                c.gravity(gravity)
+                c.quality(quality)
               end
             end
 
             # Save thumbnail
-            thumb.write path
+            thumb.write(path)
             thumb
           ensure
             tmp.unlink
           end
         else
-          raise WebshotError.new("Could not fetch page: #{url.inspect}, error code: #{page.driver.status_code}")
+          raise Webstract::Error.new("Could not fetch page: #{url.inspect}, error code: #{page.driver.status_code}")
         end
       rescue Capybara::Poltergeist::BrowserError, Capybara::Poltergeist::DeadClient, Capybara::Poltergeist::TimeoutError, Errno::EPIPE => e
         # TODO: Handle Errno::EPIPE and Errno::ECONNRESET
-        raise WebshotError.new("Capybara error: #{e.message.inspect}")
+        raise Webstract::Error.new("Capybara error: #{e.message.inspect}")
       end
     end
   end

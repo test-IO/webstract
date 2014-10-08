@@ -1,4 +1,4 @@
-require "rmagick"
+require "mini_magick"
 require "capybara/dsl"
 require "capybara/poltergeist"
 require "active_support"
@@ -6,7 +6,6 @@ require "active_support/core_ext"
 
 module Webstract
   module ScreenshotBackend
-
 
     ## Browser settings
     # Width
@@ -20,6 +19,10 @@ module Webstract
     # User agent
     mattr_accessor :user_agent
     @@user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.43 Safari/537.31"
+
+    # Gravity
+    mattr_accessor :gravity
+    @@gravity = 'north'
 
     # Customize settings
     def self.setup
@@ -42,4 +45,5 @@ module Webstract
       end
       Capybara.current_driver = :poltergeist
     end
+  end
 end
