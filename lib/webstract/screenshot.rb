@@ -6,7 +6,7 @@ module Webstract
     attr_reader :handle
 
     def initialize(options = {})
-      @handle = Webshot::Screenshot.instance
+      @handle = Webstract::ScreenshotBackend.instance
 
       options.each do |k, value|
         setter = "#{k}="
