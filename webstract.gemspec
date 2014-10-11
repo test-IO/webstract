@@ -16,7 +16,6 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^spec/})
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'mini_magick', '>= 3'
   spec.add_runtime_dependency 'activesupport', '>= 4.1', '< 5'
   spec.add_runtime_dependency 'poltergeist', '>= 1.5'
   spec.add_runtime_dependency 'faviconduit'

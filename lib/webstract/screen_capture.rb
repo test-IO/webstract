@@ -4,18 +4,21 @@ module Webstract
   class ScreenCapture
     include Capybara::DSL
 
-    attr_reader :width, :height, :user_agent, :gravity, :quality
+    attr_reader :width, :height, :user_agent, :accept_language, :path
 
     def initialize(opts = {})
       Webstract::ScreenshotBackend.capybara_setup!
       @width  = opts.fetch(:width, Webstract::ScreenshotBackend.width)
       @height = opts.fetch(:height, Webstract::ScreenshotBackend.height)
-      @gravity = opts.fetch(:gravity, Webstract::ScreenshotBackend.gravity)
       @user_agent = opts.fetch(:user_agent, Webstract::ScreenshotBackend.user_agent)
+      @accept_language = opts.fetch(:accept_language, Webstract::ScreenshotBackend.accept_language)
 
       # Browser settings
       page.driver.resize(@width, @height)
-      page.driver.headers = { "User-Agent" => @user_agent }
+      page.driver.headers = {
+        "User-Agent" => @user_agent,
+        'Accept-Language' => @accept_language
+      }
     end
 
     def start_session(&block)
@@ -31,8 +34,6 @@ module Webstract
         # Default settings
         @width   = opts.fetch(:width, 120)        if opts[:width]
         @height  = opts.fetch(:height, 90)        if opts[:width]
-        @gravity = opts.fetch(:gravity, "north")  if opts[:gravity]
-        @quality = opts.fetch(:quality, 85)       if opts[:quality]
 
         # Reset session before visiting url
         Capybara.reset_sessions! unless @session_started
@@ -46,33 +47,7 @@ module Webstract
 
         # Check response code
         if page.driver.status_code.to_i == 200 || page.driver.status_code.to_i / 100 == 3
-          tmp = Tempfile.new(['webstract', '.png'])
-          tmp.close
-          begin
-            # Save screenshot to file
-            page.driver.save_screenshot(tmp.path, :full => true)
-            binding.pry
-            # Resize screenshot
-            thumb = MiniMagick::Image.open(tmp.path)
-            if block_given?
-              # Customize MiniMagick options
-              yield thumb
-            else
-              thumb.combine_options do |c|
-                c.thumbnail "#{width}x"
-                c.background "white"
-                c.extent "#{width}x#{height}"
-                c.gravity(gravity)
-                c.quality(quality)
-              end
-            end
-
-            # Save thumbnail
-            thumb.write(path)
-            thumb
-          ensure
-            tmp.unlink
-          end
+          page.driver.save_screenshot(path, :full => true)
         else
           raise Webstract::Error.new("Could not fetch page: #{url.inspect}, error code: #{page.driver.status_code}")
         end
