@@ -4,14 +4,18 @@ module Webstract
   class ScreenCapture
     include Capybara::DSL
 
-    attr_reader :width, :height, :user_agent, :accept_language, :path
+    attr_reader :width, :height, :user_agent, :accept_language, :path, :basic_auth
 
     def initialize(opts = {})
       Webstract::ScreenshotBackend.capybara_setup!
       @width  = opts.fetch(:width, Webstract::ScreenshotBackend.width)
       @height = opts.fetch(:height, Webstract::ScreenshotBackend.height)
-      @user_agent = opts.fetch(:user_agent, Webstract::ScreenshotBackend.user_agent)
       @accept_language = opts.fetch(:accept_language, Webstract::ScreenshotBackend.accept_language)
+      @basic_auth      = opts.fetch(:basic_auth, Webstract::ScreenshotBackend.basic_auth)
+
+      ua = opts.fetch(:user_agent, Webstract::ScreenshotBackend.user_agent)
+      @user_agent = Webstract::ScreenshotBackend::USER_AGENTS[ua] if ua.is_a?(Symbol)
+
 
       # Browser settings
       page.driver.resize(@width, @height)
@@ -19,6 +23,7 @@ module Webstract
         "User-Agent" => @user_agent,
         'Accept-Language' => @accept_language
       }
+      page.driver.basic_authorize(basic_auth[:username], basic_auth[:password]) if basic_auth
     end
 
     def start_session(&block)
@@ -49,11 +54,11 @@ module Webstract
         if page.driver.status_code.to_i == 200 || page.driver.status_code.to_i / 100 == 3
           page.driver.save_screenshot(path, :full => true)
         else
-          raise Webstract::Error.new("Could not fetch page: #{url.inspect}, error code: #{page.driver.status_code}")
+          raise Webstract::Errors::PageError.new("Could not fetch page: #{url.inspect}, error code: #{page.driver.status_code}")
         end
       rescue Capybara::Poltergeist::BrowserError, Capybara::Poltergeist::DeadClient, Capybara::Poltergeist::TimeoutError, Errno::EPIPE => e
         # TODO: Handle Errno::EPIPE and Errno::ECONNRESET
-        raise Webstract::Error.new("Capybara error: #{e.message.inspect}")
+        raise Webstract::Errors::CaptureError.new("Capybara error: #{e.message.inspect}")
       end
     end
   end

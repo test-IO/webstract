@@ -1,14 +1,5 @@
 require 'faviconduit'
 
-=begin
-
-usage:
-
-favicon = Webstract::Favicon.new(url: 'https://example.com')
-favicon.fetch
-
-=end
-
 module Webstract
   class Favicon
     attr_accessor :url, :favicon_data
@@ -20,6 +11,14 @@ module Webstract
 
     def fetch
       @favicon_data = Faviconduit.get(url).data
+    end
+
+    def fetch_and_save(path)
+      data = fetch
+      File.open(path, 'w') do |f|
+        f.write(data)
+        f.close
+      end
     end
 
   end

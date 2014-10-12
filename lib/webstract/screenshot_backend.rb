@@ -24,15 +24,18 @@ module Webstract
     mattr_accessor :accept_language
     @@accept_language = 'en-us,en;q=0.5'
 
+    mattr_accessor :basic_auth
+    @@basic_auth = nil
+
 
     # User agent
     class << self
 
       def user_agent
-        @user_agent ||= USER_AGENT[:web]
+        @user_agent ||= USER_AGENTS[:web]
       end
       def user_agent=(ua)
-        agent_string = USER_AGENT[ua]
+        agent_string = USER_AGENTS[ua]
         raise(ArgumentError.new('must be one of #{USER_AGENTS.inspect}')) unless agent_string
         @user_agent = agent_string
       end
@@ -54,6 +57,7 @@ module Webstract
         Capybara::Poltergeist::Driver.new(app, {
           # Raise JavaScript errors to Ruby
           js_errors: false,
+          debug: ENV['WEBSTRACT_DEBUG'] || false,
           # Additional command line options for PhantomJS
           phantomjs_options: ['--ignore-ssl-errors=yes'],
         })
