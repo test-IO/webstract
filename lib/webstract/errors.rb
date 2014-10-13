@@ -9,5 +9,9 @@ module Webstract
     # raised when the target page could not be reached
     # but due to server errors like 404, or 500.
     class PageError < StandardError; ;end
+
+    # favicon errors
+    class MissingFavicon < StandardError; ;end
+    class InvalidFavicon < StandardError; ;end
   end
 end

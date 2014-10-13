@@ -18,7 +18,9 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'activesupport', '>= 4.1', '< 5'
   spec.add_runtime_dependency 'poltergeist', '>= 1.5'
-  spec.add_runtime_dependency 'faviconduit'
+  spec.add_runtime_dependency 'open_uri_redirections'
+  spec.add_runtime_dependency 'addressable'
+  spec.add_runtime_dependency 'nokogiri'
 
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'rake', '~> 10.0'
